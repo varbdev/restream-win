@@ -1,0 +1,26 @@
+{
+  "mpd_url": "https://362a33c2a385d7d1e52d89d18399caac6d7e6240.cdn.broadpeak.io/bcdn_token=kE3m55Uj7nyImJzdzh-nT9Ian_vq0wcBudE0cjG27co&token_ignore_params=true&token_path=%2Fout%2Fv1%2F1f375ac45935404eb603d44841ced543%2F&expires=1776537732/out/v1/1f375ac45935404eb603d44841ced543/index.mpd",
+  "license_url": "https://cpix.tbxdrm.com/v1/license/winsports/widevine?contentId=winsports&d=97da4aefe49a3d32dd2ea7a276aa27a8710950c5&geoc=&ip=201.221.178.116&nva=2026-04-19T00:42:12.299Z&token=57c808c27c1ea786a59cd9c964782222ecb33eb6010375f073e23b864895d2ef",
+  "keys": [
+    {
+      "kid": "19ca642b3eba4f4d81637667a04fdd9e",
+      "key": "a18d219ded2ebfa8f41db4a110324a9e"
+    },
+    {
+      "kid": "5a943cad6ab15cb38be03142ec55b493",
+      "key": "d367b87afb2c802db3a7983163261796"
+    },
+    {
+      "kid": "e73712bdc5a856c285a77a78686e0266",
+      "key": "c37a0f19e26e99d47d7a20ecb9fa61d0"
+    },
+    {
+      "kid": "4415e40f157a5fac8847c879b114b766",
+      "key": "a41a524e7b499f916a62879a0424602f"
+    },
+    {
+      "kid": "0cd96c4f63355bb88f3da5d23f0d31c3",
+      "key": "4780ac5572401adb2ece74654b61e5d8"
+    }
+  ]
+}

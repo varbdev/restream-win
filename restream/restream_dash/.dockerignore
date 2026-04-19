@@ -1,0 +1,14 @@
+target/
+wvd_output/
+media/*.ts
+media/*.m3u8
+
+keys.json
+flow_test_result.json
+
+*.py
+frida-server-android
+
+.git/
+.gitignore
+*.md
