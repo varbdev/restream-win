@@ -29,6 +29,12 @@ fn init_cache() -> &'static Mutex<HashMap<String, Bytes>> {
     INIT_CACHE.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
+pub fn clear_init_cache() {
+    if let Ok(mut cache) = init_cache().lock() {
+        cache.clear();
+    }
+}
+
 fn track_key_from_path(segment_path: &str) -> String {
     let base = segment_path
         .split('?')

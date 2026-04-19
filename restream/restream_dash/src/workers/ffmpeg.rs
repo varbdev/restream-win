@@ -6,11 +6,11 @@ use std::time::Duration;
 use tokio::process::Command;
 use tracing::{error, info, warn};
 
+use crate::handlers::proxy::clear_init_cache;
 use crate::services::hls_cleanup::cleanup_hls_files;
 use crate::state::AppState;
 
 const PROXY_MANIFEST_URL: &str = "http://127.0.0.1:3001/dash-proxy-manifest";
-
 
 pub async fn run_ffmpeg_supervisor(state: AppState, hls_dir: PathBuf) {
     let mut restart_delay = Duration::from_secs(1);
@@ -29,14 +29,17 @@ pub async fn run_ffmpeg_supervisor(state: AppState, hls_dir: PathBuf) {
 
         let started_at = tokio::time::Instant::now();
         let playlist_path = hls_dir.join("stream.m3u8");
+        let segment_filename = hls_dir.join("stream_%06d.ts");
 
         if is_first_start {
             cleanup_hls_files(&hls_dir).await;
+            clear_init_cache();
             is_first_start = false;
         }
 
         let args = build_ffmpeg_args(
             playlist_path.to_str().expect("invalid hls path"),
+            segment_filename.to_str().expect("invalid hls segment path"),
         );
         info!(command = ?args, "ffmpeg command");
 
@@ -84,6 +87,7 @@ pub async fn run_ffmpeg_supervisor(state: AppState, hls_dir: PathBuf) {
                         }
                         let _ = child.wait().await;
                         cleanup_hls_files(&hls_dir).await;
+                        clear_init_cache();
                         state.max_video_seq.store(0, Ordering::Relaxed);
                         state.max_audio_seq.store(0, Ordering::Relaxed);
                     }
@@ -106,48 +110,69 @@ pub async fn run_ffmpeg_supervisor(state: AppState, hls_dir: PathBuf) {
     }
 }
 
-const AUDIO_FILTER: &str =
-    "aselect='isnan(prev_selected_t)+gte(t,prev_selected_t)'";
+const AUDIO_FILTER: &str = "aresample=async=1:min_hard_comp=0.100:first_pts=0,asetpts=PTS-STARTPTS";
 
-fn build_ffmpeg_args(playlist_path: &str) -> Vec<&str> {
+fn build_ffmpeg_args(playlist_path: &str, segment_filename: &str) -> Vec<String> {
     vec![
-        "-protocol_whitelist",
-        "file,crypto,data,https,http,tcp,tls",
-        "-rw_timeout",
-        "15000000",
-        "-err_detect",
-        "ignore_err",
-        "-i",
-        PROXY_MANIFEST_URL,
-        "-map",
-        "0:v:0?",
-        "-map",
-        "0:a:0?",
-        "-c:v",
-        "copy",
-        "-c:a",
-        "aac",
-        "-b:a",
-        "128k",
-        "-ac",
-        "2",
-        "-ar",
-        "48000",
-        "-af",
-        AUDIO_FILTER,
-        "-max_muxing_queue_size",
-        "4096",
-        "-f",
-        "hls",
-        "-hls_time",
-        "4",
-        "-hls_list_size",
-        "10",
-        "-hls_flags",
-        "delete_segments",
-        "-hls_allow_cache",
-        "0",
-        "-y",
-        playlist_path,
+        "-protocol_whitelist".into(),
+        "file,crypto,data,https,http,tcp,tls".into(),
+        "-rw_timeout".into(),
+        "15000000".into(),
+        "-fflags".into(),
+        "+genpts+igndts+discardcorrupt".into(),
+        "-err_detect".into(),
+        "ignore_err".into(),
+        "-thread_queue_size".into(),
+        "4096".into(),
+        "-i".into(),
+        PROXY_MANIFEST_URL.into(),
+        "-map".into(),
+        "0:v:0?".into(),
+        "-map".into(),
+        "0:a:0?".into(),
+        "-c:v".into(),
+        "libx264".into(),
+        "-preset".into(),
+        "veryfast".into(),
+        "-tune".into(),
+        "zerolatency".into(),
+        "-pix_fmt".into(),
+        "yuv420p".into(),
+        "-profile:v".into(),
+        "main".into(),
+        "-g".into(),
+        "48".into(),
+        "-keyint_min".into(),
+        "48".into(),
+        "-sc_threshold".into(),
+        "0".into(),
+        "-c:a".into(),
+        "aac".into(),
+        "-b:a".into(),
+        "128k".into(),
+        "-ac".into(),
+        "2".into(),
+        "-ar".into(),
+        "48000".into(),
+        "-af".into(),
+        AUDIO_FILTER.into(),
+        "-max_interleave_delta".into(),
+        "0".into(),
+        "-max_muxing_queue_size".into(),
+        "4096".into(),
+        "-f".into(),
+        "hls".into(),
+        "-hls_time".into(),
+        "4".into(),
+        "-hls_list_size".into(),
+        "10".into(),
+        "-hls_segment_filename".into(),
+        segment_filename.into(),
+        "-hls_flags".into(),
+        "delete_segments+temp_file+independent_segments".into(),
+        "-hls_allow_cache".into(),
+        "0".into(),
+        "-y".into(),
+        playlist_path.into(),
     ]
 }

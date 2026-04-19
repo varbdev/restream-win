@@ -27,7 +27,12 @@ pub async fn cleanup_hls_files(hls_dir: &PathBuf) {
         let file_name = entry.file_name();
         let name = file_name.to_string_lossy();
 
-        if !(name.ends_with(".ts") || name.ends_with(".m3u8")) {
+        if !(name.ends_with(".ts")
+            || name.ends_with(".m3u8")
+            || name.ends_with(".m4s")
+            || name.ends_with(".mp4")
+            || name.ends_with(".tmp"))
+        {
             continue;
         }
 
